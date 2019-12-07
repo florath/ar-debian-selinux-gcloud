@@ -1,0 +1,14 @@
+galaxy_info:
+  role_name: ar-debian-selinux-gcloud
+  author: Andreas Florath
+  description: |
+    Ansible Role for enabling SELinux on Debian especially for Google Cloud
+  company: flonatel GmbH & Co. KG
+  license: Apache 2.0
+  min_ansible_version: 1.2
+  platforms:
+    - name: Debian
+      versions:
+        - 10
+  galaxy_tags: []
+dependencies: []

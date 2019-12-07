@@ -1,0 +1,77 @@
+---
+
+- name: "Install python-selinux"
+  apt:
+    name: python-selinux
+
+- name: "Install selinux-policy-default"
+  apt:
+    name: selinux-policy-default
+
+- name: "Install selinux-basics"
+  apt:
+    name: selinux-basics
+
+- name: "Install auditd"
+  apt:
+    name: auditd
+
+- name: "Create local SELinux policy directory"
+  file:
+    path: "/etc/selinux/local"
+    state: "directory"
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: "Copy over startup.te file"
+  copy:
+    src: startup.te
+    dest: /etc/selinux/local/startup.te
+    owner: root
+    group: root
+    mode: '0644'
+  register: file_startup_te
+
+- name: "Create mod file"
+  shell: |
+    cd /etc/selinux/local
+    checkmodule -M -m -o startup.mod startup.te
+  when: file_startup_te.changed
+  register: file_startup_mod
+
+- name: "Create pp file"
+  shell: |
+    cd /etc/selinux/local
+    semodule_package -o startup.pp -m startup.mod
+  when: file_startup_mod.changed
+  register: file_startup_pp
+
+- name: "Load pp module"
+  shell: |
+    cd /etc/selinux/local
+    semodule -i startup.pp
+  when: file_startup_pp.changed
+
+- name: "Set SELinux to enforcing"
+  lineinfile:
+    path: "/etc/selinux/config"
+    regexp: "^SELINUX="
+    line: "SELINUX=permissive"
+    # line: "SELINUX=enforcing"
+  register: selinux_set_enforcing
+
+- name: "Set SELINUXTYPE to default"
+  lineinfile:
+    path: "/etc/selinux/config"
+    regexp: "^SELINUXTYPE="
+    line: "SELINUXTYPE=default"
+  register: selinux_set_selinuxtype
+
+- name: "Call selinux-activate"
+  shell: selinux-activate
+  when: selinux_set_enforcing.changed or selinux_set_selinuxtype.changed
+
+- debug:
+    msg: "Selinux Enabled. Please restart the server to apply changes."
+  when: selinux_set_enforcing.changed or selinux_set_selinuxtype.changed
