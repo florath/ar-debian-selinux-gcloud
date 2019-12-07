@@ -57,8 +57,7 @@
   lineinfile:
     path: "/etc/selinux/config"
     regexp: "^SELINUX="
-    line: "SELINUX=permissive"
-    # line: "SELINUX=enforcing"
+    line: "SELINUX=enforcing"
   register: selinux_set_enforcing
 
 - name: "Set SELINUXTYPE to default"
@@ -71,7 +70,9 @@
 - name: "Call selinux-activate"
   shell: selinux-activate
   when: selinux_set_enforcing.changed or selinux_set_selinuxtype.changed
+        or file_startup_mod.change or file_startup_pp.changed
 
 - debug:
     msg: "Selinux Enabled. Please restart the server to apply changes."
   when: selinux_set_enforcing.changed or selinux_set_selinuxtype.changed
+        or file_startup_mod.change or file_startup_pp.changed
